@@ -45,6 +45,7 @@
             font-size: 18px; border-radius: 4px; cursor: pointer; transition: 0.3s;
         }
         .btn-submit:hover { background: #219150; }
+        .loading { text-align: center; font-size: 18px; color: #666; width: 100%; grid-column: 1 / -1; }
     </style>
 </head>
 <body>
@@ -52,52 +53,59 @@
 <div class="container">
     <h1>Đặt Hàng Trực Tuyến</h1>
 
-    <!-- Thông tin khách hàng -->
     <div class="customer-info">
-        <label for="customerId"><strong>Mã Khách Hàng (Định dạng riêng của bạn):</strong></label>
-        <input type="text" id="customerId" placeholder="Ví dụ: KH1234, KH_0901..." required>
+        <label for="customerId"><strong>Mã Khách Hàng:</strong></label>
+        <input type="text" id="customerId" placeholder="Nhập mã khách hàng của bạn..." required>
     </div>
 
-    <!-- Danh sách sản phẩm (Thay hình ảnh, tên, giá sản phẩm của bạn tại đây) -->
     <h2>Danh Sách Sản Phẩm</h2>
     <div class="products-grid" id="productList">
-        <!-- Sản phẩm 1 -->
-        <div class="product-card" data-name="Sản Phẩm A" data-price="100000">
-            <img src="https://via.placeholder.com/200" alt="Sản phẩm A">
-            <h3>Sản Phẩm A</h3>
-            <p class="price">100,000 VNĐ</p>
-            <label>Số lượng: </label>
-            <input type="number" class="qty-input" min="0" value="0">
-        </div>
-
-        <!-- Sản phẩm 2 -->
-        <div class="product-card" data-name="Sản Phẩm B" data-price="250000">
-            <img src="https://via.placeholder.com/200" alt="Sản phẩm B">
-            <h3>Sản Phẩm B</h3>
-            <p class="price">250,000 VNĐ</p>
-            <label>Số lượng: </label>
-            <input type="number" class="qty-input" min="0" value="0">
-        </div>
-
-        <!-- Sản phẩm 3 -->
-        <div class="product-card" data-name="Sản Phẩm C" data-price="500000">
-            <img src="https://via.placeholder.com/200" alt="Sản phẩm C">
-            <h3>Sản Phẩm C</h3>
-            <p class="price">500,000 VNĐ</p>
-            <label>Số lượng: </label>
-            <input type="number" class="qty-input" min="0" value="0">
-        </div>
+        <p class="loading">Đang tải danh sách sản phẩm từ cửa hàng...</p>
     </div>
 
-    <!-- Nút gửi đơn hàng -->
     <div class="cart-summary">
         <button class="btn-submit" onclick="submitOrder()">Gửi Đơn Hàng</button>
     </div>
 </div>
 
 <script>
-    // Link Google Apps Script Web App của bạn đã được chèn vào đây:
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbycyD_1w8o3tL6ItYkNB5Y75MfwHf4Tpl28rC4gGQf7emUPOCZokOffnNvni4hYp9DB5w/exec";
+
+    // Tự động tải sản phẩm từ Google Sheet khi khách mở web
+    window.onload = function() {
+        fetch(SCRIPT_URL)
+            .then(response => response.json())
+            .then(products => {
+                const productList = document.getElementById('productList');
+                productList.innerHTML = '';
+
+                if (products.length === 0) {
+                    productList.innerHTML = '<p class="loading">Chưa có sản phẩm nào trong kho.</p>';
+                    return;
+                }
+
+                products.forEach(prod => {
+                    const priceFormatted = Number(prod.price).toLocaleString('vi-VN');
+                    const card = document.createElement('div');
+                    card.className = 'product-card';
+                    card.setAttribute('data-name', prod.name);
+                    card.setAttribute('data-price', prod.price);
+
+                    card.innerHTML = `
+                        <img src="${prod.image}" alt="${prod.name}">
+                        <h3>${prod.name}</h3>
+                        <p class="price">${priceFormatted} VNĐ</p>
+                        <label>Số lượng: </label>
+                        <input type="number" class="qty-input" min="0" value="0">
+                    `;
+                    productList.appendChild(card);
+                });
+            })
+            .catch(err => {
+                console.error(err);
+                document.getElementById('productList').innerHTML = '<p class="loading">Lỗi khi tải danh sách sản phẩm!</p>';
+            });
+    };
 
     function submitOrder() {
         const customerId = document.getElementById('customerId').value.trim();
@@ -120,7 +128,7 @@
         });
 
         if (cart.length === 0) {
-            alert("Vui lòng chọn ít nhất 1 sản phẩm với số lượng lớn hơn 0!");
+            alert("Vui lòng chọn ít nhất 1 sản phẩm!");
             return;
         }
 
@@ -129,7 +137,6 @@
             cart: cart
         };
 
-        // Gửi dữ liệu về Google Sheets
         fetch(SCRIPT_URL, {
             method: 'POST',
             mode: 'no-cors',
@@ -137,8 +144,7 @@
             body: JSON.stringify(payload)
         })
         .then(() => {
-            alert("Đặt hàng thành công! Đơn hàng đã được lưu vào Trang tính.");
-            // Reset form sau khi đặt thành công
+            alert("Đặt hàng thành công!");
             document.getElementById('customerId').value = '';
             document.querySelectorAll('.qty-input').forEach(input => input.value = 0);
         })
