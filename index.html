@@ -55,7 +55,7 @@
 
     <div class="customer-info">
         <label for="customerId"><strong>Mã Khách Hàng:</strong></label>
-        <input type="text" id="customerId" placeholder="Nhập mã khách hàng của bạn..." required>
+        <input type="text" id="customerId" placeholder="Nhập mã CĂN HỘ của bạn VÍ DỤ: A1.19 , KHI ĐẶT VUI LÒNG CHỈ NHẤN 1 LẦN..." required>
     </div>
 
     <h2>Danh Sách Sản Phẩm</h2>
@@ -96,7 +96,7 @@
                         <h3>${prod.name}</h3>
                         <p class="price">${priceFormatted} VNĐ</p>
                         <label>Số lượng: </label>
-                        <input type="number" class="qty-input" min="0" value="0">
+                        <input type="number" class="qty-input" min="0" step="any" value="0">
                     `;
                     productList.appendChild(card);
                 });
@@ -144,7 +144,7 @@
             body: JSON.stringify(payload)
         })
         .then(() => {
-            alert("Đặt hàng thành công!");
+            alert("CẢM ƠN ANH CHỊ ĐÃ ĐẶT HÀNG!");
             document.getElementById('customerId').value = '';
             document.querySelectorAll('.qty-input').forEach(input => input.value = 0);
         })
